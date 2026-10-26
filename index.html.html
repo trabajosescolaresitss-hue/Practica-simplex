@@ -1,0 +1,781 @@
+<!doctype html><html><head><meta charset=utf8><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<title>Simplex ejercicio 2</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Bricolage+Grotesque:wght@600;800&family=IBM+Plex+Mono:wght@400;500;600&display=swap">
+<style>
+/* Concepto: hoja de cuaderno cuadriculado. Una columna, barra fija con los pasos, y al final de cada paso un recuadro "Tu turno" con un solo intento. Pantalla de nombre al inicio y hoja de resultados al final. */
+:root {
+  --bg: #EDF3F0;
+  --grid: rgba(22, 60, 70, .08);
+  --sheet: #FBFDFC;
+  --ink: #12262E;
+  --muted: #455C64;
+  --line: #C5D4CF;
+  --pen: #2340C8;
+  --pen-fg: #FFFFFF;
+  --mark: #FFE066;
+  --mark-fg: #2B2300;
+  --row: #E3EAFB;
+  --ok: #0F7B4F;
+  --ok-bg: #DDF3E8;
+  --bad: #B3261E;
+  --bad-bg: #FBE3E0;
+  --l1: #B45309;
+  --l2: #2340C8;
+  --l3: #7C3AED;
+  --zone: rgba(15, 123, 79, .18);
+  --f-display: 'Bricolage Grotesque', 'Trebuchet MS', system-ui, sans-serif;
+  --f-body: 'Atkinson Hyperlegible', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --f-mono: 'IBM Plex Mono', ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #0E181D; --grid: rgba(190, 225, 235, .06); --sheet: #15242B; --ink: #E7F1F3; --muted: #9FB6BD;
+    --line: #2C434C; --pen: #8EA6FF; --pen-fg: #0B1230; --mark: #5E4B00; --mark-fg: #FFEFB0; --row: #1E2B55;
+    --ok: #5FD3A0; --ok-bg: #12372A; --bad: #FF9188; --bad-bg: #3E1A17;
+    --l1: #F59E4B; --l2: #8EA6FF; --l3: #B79CFF; --zone: rgba(95, 211, 160, .18);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #0E181D; --grid: rgba(190, 225, 235, .06); --sheet: #15242B; --ink: #E7F1F3; --muted: #9FB6BD;
+  --line: #2C434C; --pen: #8EA6FF; --pen-fg: #0B1230; --mark: #5E4B00; --mark-fg: #FFEFB0; --row: #1E2B55;
+  --ok: #5FD3A0; --ok-bg: #12372A; --bad: #FF9188; --bad-bg: #3E1A17;
+  --l1: #F59E4B; --l2: #8EA6FF; --l3: #B79CFF; --zone: rgba(95, 211, 160, .18);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+body {
+  background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+  color: var(--ink);
+  font-family: var(--f-body);
+  font-size: 17px;
+  line-height: 1.55;
+}
+h1, h2, h3 { font-family: var(--f-display); text-wrap: balance; margin: 0; line-height: 1.15; }
+p { margin: 0; }
+button, input, textarea { font: inherit; }
+:focus-visible { outline: 3px solid var(--pen); outline-offset: 2px; }
+
+.bar {
+  position: sticky; top: env(safe-area-inset-top, 0px); z-index: 5;
+  background: var(--sheet); border-bottom: 1px solid var(--line);
+}
+.in, .wrap { max-width: 760px; margin-inline: auto; padding-inline: 16px; }
+.in { padding-block: 10px 12px; display: flex; flex-direction: column; gap: 8px; }
+.head { display: flex; flex-wrap: wrap; align-items: baseline; justify-content: space-between; gap: 2px 12px; }
+.head h1 { font-size: 1.1rem; font-weight: 800; }
+.who { font-weight: 700; font-size: .95rem; color: var(--pen); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.where { font-size: .9rem; color: var(--muted); }
+#nav { display: flex; gap: 6px; flex-wrap: wrap; }
+.chip {
+  min-width: 38px; height: 38px; padding: 0 8px; border-radius: 8px;
+  border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink);
+  font-family: var(--f-mono); font-weight: 600; cursor: pointer;
+}
+.chip.done { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.chip[aria-current="step"] { background: var(--pen); border-color: var(--pen); color: var(--pen-fg); }
+
+.wrap { padding-block: 20px 40px; }
+.step { background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 22px clamp(16px, 4vw, 28px) 26px; }
+.step > * + * { margin-top: 14px; }
+.eyebrow { font-size: .8rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); font-weight: 700; }
+.step h2 { font-size: clamp(1.55rem, 5vw, 2.1rem); font-weight: 800; }
+.small { font-size: .9rem; color: var(--muted); }
+mark { background: var(--mark); color: var(--mark-fg); padding: 0 .25em; border-radius: 3px; }
+ul.plain { margin: 0; padding-left: 1.2em; display: flex; flex-direction: column; gap: 6px; }
+.eq {
+  font-family: var(--f-mono); font-size: .95rem; line-height: 1.8; background: var(--bg);
+  border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; overflow-x: auto; white-space: pre;
+}
+.rule { border: 2px dashed var(--line); border-radius: 8px; padding: 12px 14px; }
+details { border: 1px solid var(--line); border-radius: 8px; padding: 10px 14px; }
+summary { cursor: pointer; font-weight: 700; }
+details[open] summary { margin-bottom: 8px; }
+
+.scroll { overflow-x: auto; max-width: 100%; }
+table.simplex { border-collapse: collapse; font-family: var(--f-mono); font-size: .95rem; margin-inline: auto; }
+table.simplex th, table.simplex td { border: 1px solid var(--line); padding: 6px 9px; text-align: center; min-width: 2.6rem; font-weight: 500; }
+table.simplex thead th { background: var(--bg); font-weight: 600; }
+table.simplex .lab { text-align: right; color: var(--muted); }
+table.simplex .base, table.simplex .rowh { font-weight: 700; }
+table.simplex .rowh { text-align: left; white-space: nowrap; }
+table.simplex tr.sum td, table.simplex tr.sum .lab { background: var(--bg); }
+table.simplex .hc { background: var(--mark); color: var(--mark-fg); }
+table.simplex tr.hr td:not(.hc) { background: var(--row); }
+table.simplex td.pivot { outline: 3px solid var(--pen); outline-offset: -3px; font-weight: 700; }
+table.simplex.mini th, table.simplex.mini td { padding: 6px 5px; }
+
+.ex { border: 2px dashed var(--line); border-radius: 10px; padding: 16px; display: flex; flex-direction: column; gap: 12px; }
+.ex[data-done="1"] { border-style: solid; }
+.ex + .ex, .ex + .choice, .choice + .ex, .choice + .choice { margin-top: 14px; }
+.ex-h { font-size: .8rem; letter-spacing: .09em; text-transform: uppercase; font-weight: 700; color: var(--pen); }
+.ex-q { font-weight: 700; }
+.choice { display: flex; flex-direction: column; gap: 8px; }
+.cell {
+  width: 4.2em; padding: 7px 4px; text-align: center; font-family: var(--f-mono); font-size: 16px;
+  background: var(--sheet); color: var(--ink); border: 1.5px solid var(--muted); border-radius: 6px;
+}
+table.simplex .cell { width: 3.6em; }
+.cell:disabled { -webkit-text-fill-color: currentColor; opacity: 1; cursor: not-allowed; }
+.cell.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); }
+.cell.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); }
+.fix { display: block; font-family: var(--f-mono); font-size: .78rem; font-weight: 600; color: var(--ok); margin-top: 2px; }
+.row { display: flex; flex-wrap: wrap; gap: 10px 22px; align-items: center; font-family: var(--f-mono); }
+.row label { display: inline-flex; align-items: center; gap: 8px; }
+.actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.btn {
+  min-height: 44px; padding: 8px 18px; border-radius: 8px; border: 1.5px solid var(--pen);
+  background: var(--pen); color: var(--pen-fg); font-weight: 700; cursor: pointer;
+}
+.btn.ghost { background: transparent; color: var(--ink); border-color: var(--line); }
+.btn:disabled { opacity: .45; cursor: default; }
+.opt {
+  display: block; width: 100%; text-align: left; padding: 11px 14px; border-radius: 8px;
+  border: 1.5px solid var(--line); background: var(--sheet); color: var(--ink); cursor: pointer;
+}
+.opt:disabled { cursor: default; color: var(--ink); opacity: .65; }
+.opt.ok { border-color: var(--ok); background: var(--ok-bg); color: var(--ok); font-weight: 700; opacity: 1; }
+.opt.bad { border-color: var(--bad); background: var(--bad-bg); color: var(--bad); opacity: 1; }
+.opt.key { border: 2px dashed var(--ok); color: var(--ok); font-weight: 700; opacity: 1; }
+.opt.colbtn { display: inline-block; width: auto; text-align: center; font-family: var(--f-mono); font-weight: 700; padding: 6px 12px; }
+.msg { min-height: 1.5em; font-weight: 700; }
+.msg.ok { color: var(--ok); }
+.msg.bad { color: var(--bad); }
+
+.slide { display: grid; grid-template-columns: auto 1fr 3.2em; gap: 8px 12px; align-items: center; font-family: var(--f-mono); }
+.slide input[type="range"] { width: 100%; min-width: 0; accent-color: var(--pen); }
+.slide output { text-align: right; font-weight: 600; }
+.cons { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; font-family: var(--f-mono); font-size: .92rem; }
+.cons li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; justify-content: space-between; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; }
+.cons .good { color: var(--ok); font-weight: 600; }
+.cons .over { color: var(--bad); font-weight: 600; }
+.zbox { display: flex; flex-wrap: wrap; gap: 6px 24px; font-family: var(--f-mono); font-weight: 600; }
+.plot { width: 100%; max-width: 100%; height: auto; display: block; }
+.plot .gr { stroke: var(--line); stroke-width: 1; }
+.plot .ax { stroke: var(--muted); stroke-width: 1.5; }
+.plot .tk { fill: var(--muted); font: 12px var(--f-mono); }
+.plot .ln { fill: none; stroke-width: 2.4; }
+.plot .l1 { stroke: var(--l1); }
+.plot .l2 { stroke: var(--l2); stroke-dasharray: 8 4; }
+.plot .l3 { stroke: var(--l3); stroke-dasharray: 2 4; }
+.plot .zone { fill: var(--zone); stroke: var(--ok); stroke-width: 1.5; }
+.plot .vz { fill: var(--ink); font: 600 12px var(--f-mono); }
+.plot .pt { stroke: var(--sheet); stroke-width: 2.5; }
+.plot .pt.ok { fill: var(--ok); }
+.plot .pt.bad { fill: var(--bad); }
+.legend { display: flex; flex-wrap: wrap; gap: 6px 18px; font-family: var(--f-mono); font-size: .85rem; }
+.legend span { display: inline-flex; align-items: center; gap: 6px; }
+.legend i { display: inline-block; width: 26px; border-top: 3px solid; }
+.legend .a { border-color: var(--l1); }
+.legend .b { border-color: var(--l2); border-top-style: dashed; }
+.legend .c { border-color: var(--l3); border-top-style: dotted; }
+.legend .z { height: 12px; border: 1.5px solid var(--ok); background: var(--zone); }
+
+.score { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 20px; }
+.big { font-family: var(--f-display); font-weight: 800; font-size: clamp(3rem, 14vw, 5.5rem); line-height: 1; }
+.grade { font-family: var(--f-mono); font-weight: 600; font-size: 1.25rem; }
+.meter { height: 16px; border-radius: 8px; background: var(--bg); border: 1px solid var(--line); overflow: hidden; }
+.meter i { display: block; height: 100%; background: var(--ok); }
+table.res { border-collapse: collapse; width: 100%; }
+table.res th, table.res td { border-bottom: 1px solid var(--line); padding: 8px 10px; text-align: left; font-weight: 500; }
+table.res thead th { font-size: .8rem; letter-spacing: .09em; text-transform: uppercase; color: var(--muted); }
+table.res td.n { font-family: var(--f-mono); text-align: right; white-space: nowrap; font-weight: 600; }
+table.res td.st { white-space: nowrap; }
+.good { color: var(--ok); font-weight: 700; }
+.over { color: var(--bad); font-weight: 700; }
+.copybox { width: 100%; min-height: 9em; font-family: var(--f-mono); font-size: .85rem; padding: 10px; border: 1.5px solid var(--line); border-radius: 8px; background: var(--sheet); color: var(--ink); }
+
+[hidden] { display: none !important; }
+.gate {
+  position: fixed; inset: 0; z-index: 30; display: flex; align-items: center; justify-content: center;
+  padding: 16px; padding-top: calc(16px + env(safe-area-inset-top, 0px)); padding-bottom: calc(16px + env(safe-area-inset-bottom, 0px));
+  overflow: auto; background-color: var(--bg);
+  background-image: linear-gradient(var(--grid) 1px, transparent 1px), linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+.gcard { width: 100%; max-width: 460px; background: var(--sheet); border: 1px solid var(--line); border-radius: 10px; padding: 28px 24px; display: flex; flex-direction: column; gap: 16px; }
+.gcard h2 { font-size: 1.9rem; font-weight: 800; }
+.field { display: flex; flex-direction: column; gap: 6px; font-weight: 700; }
+.field input { font-size: 18px; padding: 12px 14px; border: 1.5px solid var(--muted); border-radius: 8px; background: var(--sheet); color: var(--ink); }
+.err { color: var(--bad); font-weight: 700; min-height: 1.4em; }
+
+.pager { display: flex; justify-content: space-between; gap: 12px; margin-top: 16px; }
+.credit { margin-top: 18px; font-size: .85rem; color: var(--muted); }
+@media (max-width: 480px) { .legend { flex-direction: column; } }
+</style>
+
+<header class="bar">
+  <div class="in">
+    <div class="head"><h1>Simplex · ejercicio 2</h1><span class="who" id="who"></span></div>
+    <nav id="nav" aria-label="Pasos de la clase"></nav>
+    <p class="where" id="where">Paso 1 de 8</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<section class="step" data-step="1" data-title="Qué queremos resolver">
+  <p class="eyebrow">Paso 1 de 8</p>
+  <h2>Qué queremos resolver</h2>
+  <p>Imagina que fabricas dos productos. Cada pieza de X1 te deja $6 de ganancia y cada pieza de X2 te deja $4. Tienes tres límites de material y quieres saber cuántas piezas de cada uno te dan la mayor ganancia.</p>
+  <p class="small">La historia es solo para imaginarlo. El ejercicio original trae nada más los números.</p>
+  <div class="eq">MAX  Z = 6X1 + 4X2
+sujeto a:
+   X1 +  X2 ≤ 400
+  2X1 +  X2 ≤ 1000
+   X1 + 3X2 ≤ 900
+   X1, X2 ≥ 0</div>
+  <p>El simplex va probando soluciones cada vez mejores, con una receta fija, hasta que ya no se puede mejorar. Es otro ejercicio con números distintos, pero la receta es la misma. Vamos a seguirla completa.</p>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <div class="choice" data-why="La función objetivo es la ganancia que queremos hacer lo más grande posible: 6X1 + 4X2.">
+      <p class="ex-q">¿Cuál de estas es la función objetivo?</p>
+      <button type="button" class="opt" data-ok="1">6X1 + 4X2</button>
+      <button type="button" class="opt" data-ok="0">X1 + X2 ≤ 400</button>
+      <button type="button" class="opt" data-ok="0">X1, X2 ≥ 0</button>
+      <p class="msg" role="status"></p>
+    </div>
+  </div>
+</section>
+
+<section class="step" data-step="2" data-title="Igualdades" hidden>
+  <p class="eyebrow">Paso 2 de 8</p>
+  <h2>Convertir las desigualdades en igualdades</h2>
+  <p>El simplex trabaja con signos de igual. Para quitar el "menor o igual" le sumamos a cada renglón una <mark>variable de holgura</mark>. La holgura es lo que te sobra de ese material.</p>
+  <div class="eq">  X1 +  X2 + S1 = 400
+ 2X1 +  X2 + S2 = 1000
+  X1 + 3X2 + S3 = 900</div>
+  <p>En la función objetivo las S valen 0, porque lo que sobra no te da ganancia:</p>
+  <div class="eq">6X1 + 4X2 + 0S1 + 0S2 + 0S3</div>
+  <div class="rule">
+    <p><b>≤</b> se arregla sumando una variable de holgura (S1, S2, S3).</p>
+    <p><b>≥</b> se arregla sumando una variable artificial y restando una holgura (A1 − S1, A2 − S2...). En este ejemplo no aparece, pero conviene saberlo.</p>
+  </div>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento por pregunta</p>
+    <div class="choice" data-why="Con ≤ se suma una holgura: es lo que sobra del material.">
+      <p class="ex-q">Para X1 + X2 ≤ 400, ¿qué agregas?</p>
+      <button type="button" class="opt" data-ok="1">Sumo una holgura: + S1</button>
+      <button type="button" class="opt" data-ok="0">Resto una holgura: − S1</button>
+      <button type="button" class="opt" data-ok="0">Sumo una artificial: + A1</button>
+      <p class="msg" role="status"></p>
+    </div>
+    <div class="choice" data-why="Con ≥ la holgura se resta y además entra una variable artificial.">
+      <p class="ex-q">Si una restricción fuera ≥, ¿qué haces?</p>
+      <button type="button" class="opt" data-ok="0">Solo sumo una holgura</button>
+      <button type="button" class="opt" data-ok="1">Resto una holgura y sumo una artificial</button>
+      <button type="button" class="opt" data-ok="0">No hago nada</button>
+      <p class="msg" role="status"></p>
+    </div>
+  </div>
+</section>
+
+<section class="step" data-step="3" data-title="Tabla 1" hidden>
+  <p class="eyebrow">Paso 3 de 8</p>
+  <h2>Armar la Tabla 1</h2>
+  <ul class="plain">
+    <li><b>Cj</b>: la función objetivo, tal cual.</li>
+    <li><b>Cuerpo</b>: los números de cada restricción, tal cual.</li>
+    <li><b>Base</b>: arrancamos con las holguras S1, S2 y S3.</li>
+    <li><b>CB</b>: lo que valen en la función objetivo las variables de la base. Aquí son 0, 0 y 0.</li>
+    <li><b>Zj</b>: en cada columna multiplicas CB por los números de esa columna y sumas.</li>
+    <li><b>Cj − Zj</b>: a cada Cj le restas su Zj.</li>
+  </ul>
+  <p>Ejemplo del Zj de la solución: (0)(400) + (0)(1000) + (0)(900) = 0.</p>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <p class="ex-q">Llena los renglones Zj y Cj − Zj. Cada casilla vale 1 punto.</p>
+    <div data-tbl="t1-input"></div>
+    <div class="actions">
+      <button type="button" class="btn" data-act="check">Enviar respuestas</button>
+    </div>
+    <p class="msg" role="status"></p>
+    <p class="small" data-hint-text hidden>Como todos los CB valen 0, cada Zj sale 0. Entonces Cj − Zj es lo mismo que Cj.</p>
+  </div>
+</section>
+
+<section class="step" data-step="4" data-title="Columna de entrada" hidden>
+  <p class="eyebrow">Paso 4 de 8</p>
+  <h2>Elegir la columna de entrada</h2>
+  <p class="rule">Mira el renglón <b>Cj − Zj</b>. Si todos son <mark>≤ 0</mark>, ya terminaste. Si no, entra la variable que tenga el número <mark>más grande</mark> (esto es para problemas de maximizar).</p>
+  <p>Esa columna se llama <b>columna de entrada</b>: es la variable que va a entrar a la base.</p>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <div class="choice" data-why="El 6 es el más grande del renglón Cj − Zj, así que X1 entra a la base.">
+      <p class="ex-q">Toca el nombre de la variable que entra.</p>
+      <div data-tbl="t1-pick"></div>
+      <p class="msg" role="status"></p>
+    </div>
+  </div>
+</section>
+
+<section class="step" data-step="5" data-title="Renglón de salida" hidden>
+  <p class="eyebrow">Paso 5 de 8</p>
+  <h2>Elegir el renglón de salida y el pivote</h2>
+  <p class="rule">Divide cada número de la columna <b>Solución</b> entre el número de la columna de entrada, en el mismo renglón. Los ceros y los negativos no cuentan. Sale el renglón con el resultado <mark>más pequeño</mark>. Si hay empate, escoge cualquiera.</p>
+  <p>El <b>pivote</b> es el número donde se cruzan la columna de entrada y el renglón de salida.</p>
+  <div data-tbl="t1-col"></div>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <p class="ex-q">Haz las divisiones.</p>
+    <div class="row">
+      <label>S1: 400 ÷ 1 = <input class="cell" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Resultado de 400 entre 1" data-a="400"></label>
+      <label>S2: 1000 ÷ 2 = <input class="cell" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Resultado de 1000 entre 2" data-a="500"></label>
+      <label>S3: 900 ÷ 1 = <input class="cell" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Resultado de 900 entre 1" data-a="900"></label>
+    </div>
+    <div class="actions">
+      <button type="button" class="btn" data-act="check">Enviar respuestas</button>
+    </div>
+    <p class="msg" role="status"></p>
+    <p class="small" data-hint-text hidden>1000 ÷ 2 es 500. Las otras dos divisiones se quedan igual porque dividen entre 1.</p>
+  </div>
+  <div class="choice" data-why="El 400 es el más pequeño y está en el renglón de S1. Sale S1.">
+    <p class="ex-q">¿Qué variable sale de la base?</p>
+    <button type="button" class="opt" data-ok="1">S1</button>
+    <button type="button" class="opt" data-ok="0">S2</button>
+    <button type="button" class="opt" data-ok="0">S3</button>
+    <p class="msg" role="status"></p>
+  </div>
+  <div class="ex">
+    <p class="ex-q">¿Cuánto vale el pivote? (cruce de X1 con S1)</p>
+    <div class="row"><label>Pivote = <input class="cell" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="Valor del pivote" data-a="1"></label></div>
+    <div class="actions">
+      <button type="button" class="btn" data-act="check">Enviar respuesta</button>
+    </div>
+    <p class="msg" role="status"></p>
+    <p class="small" data-hint-text hidden>Ubica la columna X1 y el renglón S1 en la tabla. Donde se cruzan está el pivote.</p>
+  </div>
+</section>
+
+<section class="step" data-step="6" data-title="Renglones nuevos" hidden>
+  <p class="eyebrow">Paso 6 de 8</p>
+  <h2>Calcular los renglones nuevos</h2>
+  <p>Ahora X1 reemplaza a S1 en la base. Hay dos reglas:</p>
+  <div class="rule">
+    <p><b>1.</b> Renglón de X1 = renglón de salida (S1) ÷ pivote.</p>
+    <p><b>2.</b> Los demás renglones: <mark>nuevo = viejo − (número que el viejo tiene en la columna de entrada) × (renglón nuevo de X1)</mark>.</p>
+  </div>
+  <div data-tbl="t1-old"></div>
+  <details>
+    <summary>Ver cómo sale el renglón S2</summary>
+    <div class="eq">viejo S2       1000   2   1   0   1   0
+número en X1 = 2
+2 × renglón X1  800   2   2   2   0   0
+resta =         200   0  −1  −2   1   0</div>
+  </details>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <p class="ex-q">Llena los tres renglones nuevos. Como el pivote es 1, dividir no cambia nada. Cada casilla vale 1 punto.</p>
+    <div data-tbl="newrows"></div>
+    <div class="actions">
+      <button type="button" class="btn" data-act="check">Enviar respuestas</button>
+    </div>
+    <p class="msg" role="status"></p>
+    <p class="small" data-hint-text hidden>Para S3, el número en la columna X1 es 1. Multiplica todo el renglón de X1 por 1 (400, 1, 1, 1, 0, 0) y réstalo al renglón viejo de S3 (900, 1, 3, 0, 0, 1).</p>
+  </div>
+</section>
+
+<section class="step" data-step="7" data-title="Tabla 2" hidden>
+  <p class="eyebrow">Paso 7 de 8</p>
+  <h2>Armar la Tabla 2 y revisar</h2>
+  <p>Con los renglones nuevos armamos la Tabla 2. Ahora CB de X1 vale 6, porque X1 ya está en la base. Calculamos otra vez Zj y Cj − Zj.</p>
+  <p>Por ejemplo, el Zj de X2 es (6)(1) + (0)(−1) + (0)(2) = 6, y su Cj − Zj es 4 − 6 = −2.</p>
+  <div class="ex">
+    <p class="ex-h">Tu turno · un solo intento</p>
+    <p class="ex-q">Llena los renglones Zj y Cj − Zj. Cada casilla vale 1 punto.</p>
+    <div data-tbl="t2-input"></div>
+    <div class="actions">
+      <button type="button" class="btn" data-act="check">Enviar respuestas</button>
+    </div>
+    <p class="msg" role="status"></p>
+    <p class="small" data-hint-text hidden>Zj de la solución: (6)(400) + (0)(200) + (0)(500). Para cada columna multiplica CB por sus números y suma. Después, Cj − Zj.</p>
+  </div>
+  <div class="choice" data-why="Todos los Cj − Zj son 0 o negativos, así que ya no se puede mejorar.">
+    <p class="ex-q">¿Ya llegamos a la solución?</p>
+    <button type="button" class="opt" data-ok="1">Sí, todos los Cj − Zj son ≤ 0</button>
+    <button type="button" class="opt" data-ok="0">No, hay que repetir los pasos 4, 5 y 6</button>
+    <p class="msg" role="status"></p>
+  </div>
+</section>
+
+<section class="step" data-step="8" data-title="La solución" hidden>
+  <p class="eyebrow">Paso 8 de 8</p>
+  <h2>Leer la solución</h2>
+  <p>Las variables que están en la base valen lo que dice la columna Solución. Las que no están en la base valen 0.</p>
+  <div class="eq">X1 = 400
+X2 = 0
+Z  = 2400
+(S2 = 200 y S3 = 500 son material que sobra, S1 = 0)</div>
+  <p>Intenta ganarle al simplex. Mueve los controles y busca un punto con una Z más grande que 2400 que no se pase de ningún límite. Este juego no da puntos.</p>
+  <div class="ex">
+    <p class="ex-h">Para jugar · sin puntos</p>
+    <div class="slide">
+      <label for="x1">X1</label><input id="x1" type="range" min="0" max="600" step="10" value="200"><output id="x1v">200</output>
+      <label for="x2">X2</label><input id="x2" type="range" min="0" max="450" step="10" value="100"><output id="x2v">100</output>
+    </div>
+    <svg id="plot" class="plot" viewBox="0 0 530 372" role="img" aria-label="Gráfica de las tres restricciones, la zona permitida y el punto elegido"></svg>
+    <div class="legend">
+      <span><i class="a"></i>X1 + X2 = 400</span>
+      <span><i class="b"></i>2X1 + X2 = 1000</span>
+      <span><i class="c"></i>X1 + 3X2 = 900</span>
+      <span><i class="z"></i>zona permitida</span>
+    </div>
+    <ul class="cons" id="cons"></ul>
+    <div class="zbox"><span id="zval">Z = 0</span><span id="zbest">Tu mejor Z válido: ninguna todavía</span></div>
+    <p class="msg" id="pmsg" role="status"></p>
+    <div class="actions"><button type="button" class="btn ghost" id="setopt">Poner la solución del simplex</button></div>
+    <p class="small">La zona permitida tiene cuatro esquinas: (0, 0), (400, 0), (150, 250) y (0, 300). Ahí la Z vale 0, 2400, 1900 y 1200. El simplex salta de esquina en esquina y se queda en la mejor. Aquí es (400, 0), con Z = 2400.</p>
+  </div>
+</section>
+
+<section class="step" data-step="9" data-title="Resultados" hidden>
+  <p class="eyebrow">Resultados</p>
+  <h2 id="rname">Tu puntaje</h2>
+  <div id="resbox"></div>
+</section>
+
+<div class="pager">
+  <button type="button" class="btn" id="next">Siguiente</button>
+</div>
+<p class="credit">Ejercicio distinto al del tutorial; el método es el mismo.</p>
+
+</main>
+
+<div class="gate" id="gate" role="dialog" aria-modal="true" aria-labelledby="gt" hidden>
+  <form class="gcard" id="gform" novalidate>
+    <p class="eyebrow">Clase interactiva</p>
+    <h2 id="gt">Simplex · ejercicio 2</h2>
+    <p>Escribe tu nombre para empezar. Cada pregunta se contesta una sola vez, así que piénsala antes de enviar. Al final ves tu puntaje.</p>
+    <label class="field" for="nameIn">Tu nombre completo<input id="nameIn" type="text" autocomplete="name" maxlength="60"></label>
+    <p class="err" id="gerr" role="alert"></p>
+    <button type="submit" class="btn">Empezar</button>
+  </form>
+</div>
+
+<script>
+(function () {
+  var KEY = 'simplex-clase-ej2';
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  var num = function (v) {
+    var t = String(v).trim().replace(/−/g, '-').replace(',', '.');
+    return t === '' ? NaN : Number(t);
+  };
+  var f = function (v) { return String(v).replace('-', '−'); };
+
+  /* ---------- tablas ---------- */
+  var COLS = ['X1', 'X2', 'S1', 'S2', 'S3'], CJ = [6, 4, 0, 0, 0];
+  var T1 = [
+    { cb: 0, b: 'S1', s: 400, c: [1, 1, 1, 0, 0] },
+    { cb: 0, b: 'S2', s: 1000, c: [2, 1, 0, 1, 0] },
+    { cb: 0, b: 'S3', s: 900, c: [1, 3, 0, 0, 1] }
+  ];
+  var T2 = [
+    { cb: 6, b: 'X1', s: 400, c: [1, 1, 1, 0, 0] },
+    { cb: 0, b: 'S2', s: 200, c: [0, -1, -2, 1, 0] },
+    { cb: 0, b: 'S3', s: 500, c: [0, 2, -1, 0, 1] }
+  ];
+  var ZJ1 = { s: 0, c: [0, 0, 0, 0, 0] }, CZ1 = [6, 4, 0, 0, 0];
+  var ZJ2 = { s: 2400, c: [6, 6, 6, 0, 0] }, CZ2 = [0, -2, -6, 0, 0];
+
+  function inp(a, label) {
+    return '<input class="cell" type="text" inputmode="text" autocomplete="off" spellcheck="false" aria-label="' + label + '" data-a="' + a + '">';
+  }
+  function tbl(o) {
+    var hiCol = o.hiCol === undefined ? -1 : o.hiCol, hiRow = o.hiRow === undefined ? -1 : o.hiRow;
+    var hc = function (i) { return i === hiCol ? ' hc' : ''; };
+    var cell = function (v, l) { return o.input ? inp(v, l) : f(v); };
+    var h = '<div class="scroll"><table class="simplex"><thead><tr class="cj"><th colspan="3" class="lab">Cj</th>';
+    CJ.forEach(function (v, i) { h += '<th class="' + hc(i).trim() + '">' + v + '</th>'; });
+    h += '</tr><tr><th>CB</th><th>Base</th><th>Solución</th>';
+    COLS.forEach(function (c, i) {
+      h += '<th class="' + hc(i).trim() + '">' + (o.pick ? '<button type="button" class="opt colbtn" data-ok="' + (i === 0 ? 1 : 0) + '">' + c + '</button>' : c) + '</th>';
+    });
+    h += '</tr></thead><tbody>';
+    o.rows.forEach(function (r, ri) {
+      h += '<tr class="' + (ri === hiRow ? 'hr' : '') + '"><td>' + r.cb + '</td><td class="base">' + r.b + '</td><td>' + r.s + '</td>';
+      r.c.forEach(function (v, i) { h += '<td class="' + (hc(i).trim() + (ri === hiRow && i === hiCol ? ' pivot' : '')).trim() + '">' + f(v) + '</td>'; });
+      h += '</tr>';
+    });
+    h += '<tr class="sum"><td colspan="2" class="lab">Zj</td><td>' + cell(o.zj.s, 'Zj de la solución') + '</td>';
+    o.zj.c.forEach(function (v, i) { h += '<td class="' + hc(i).trim() + '">' + cell(v, 'Zj de ' + COLS[i]) + '</td>'; });
+    h += '</tr><tr class="sum"><td colspan="3" class="lab">Cj − Zj</td>';
+    o.cz.forEach(function (v, i) { h += '<td class="' + hc(i).trim() + '">' + cell(v, 'Cj menos Zj de ' + COLS[i]) + '</td>'; });
+    return h + '</tr></tbody></table></div>';
+  }
+  function newrows() {
+    var R = [['X1 = S1 ÷ 1', [400, 1, 1, 1, 0, 0]], ['S2 nuevo', [200, 0, -1, -2, 1, 0]], ['S3 nuevo', [500, 0, 2, -1, 0, 1]]];
+    var h = '<div class="scroll"><table class="simplex mini"><thead><tr><th>Renglón</th><th>Solución</th>';
+    COLS.forEach(function (c) { h += '<th>' + c + '</th>'; });
+    h += '</tr></thead><tbody>';
+    R.forEach(function (r) {
+      h += '<tr><th class="rowh">' + r[0] + '</th>';
+      r[1].forEach(function (x, i) { h += '<td>' + inp(x, r[0] + ' ' + (i ? COLS[i - 1] : 'solución')) + '</td>'; });
+      h += '</tr>';
+    });
+    return h + '</tbody></table></div>';
+  }
+  var builders = {
+    't1-input': function () { return tbl({ rows: T1, zj: ZJ1, cz: CZ1, input: true }); },
+    't1-pick': function () { return tbl({ rows: T1, zj: ZJ1, cz: CZ1, pick: true }); },
+    't1-col': function () { return tbl({ rows: T1, zj: ZJ1, cz: CZ1, hiCol: 0 }); },
+    't1-old': function () { return tbl({ rows: T1, zj: ZJ1, cz: CZ1, hiCol: 0, hiRow: 0 }); },
+    't2-input': function () { return tbl({ rows: T2, zj: ZJ2, cz: CZ2, input: true }); },
+    'newrows': newrows
+  };
+  $$('[data-tbl]').forEach(function (el) { el.innerHTML = builders[el.dataset.tbl](); });
+
+  /* ---------- estado (nombre y respuestas del alumno) ---------- */
+  var S = { name: '', ans: {} };
+  /* sin guardado: al abrir o recargar el archivo todo empieza desde cero */
+  function load() {}
+  function save() {}
+
+  /* ---------- preguntas con puntos ---------- */
+  $$('.ex').forEach(function (ex) { if ($('input[data-a]', ex)) ex.dataset.has = '1'; });
+  var qs = $$('.ex[data-has], .choice');
+  qs.forEach(function (q, i) {
+    q.dataset.qid = 'q' + i;
+    q.dataset.pts = q.classList.contains('choice') ? 1 : $$('input[data-a]', q).length;
+  });
+
+  /* ---------- navegación ---------- */
+  var steps = $$('.step'), nav = $('#nav'), cur = 1, LAST = steps.length;
+  steps.forEach(function (s, i) {
+    var b = document.createElement('button');
+    b.type = 'button'; b.className = 'chip'; b.textContent = (i + 1 === LAST) ? 'Fin' : i + 1;
+    b.title = s.dataset.title; b.setAttribute('aria-label', (i + 1 === LAST) ? 'Resultados' : 'Paso ' + (i + 1) + ': ' + s.dataset.title);
+    b.addEventListener('click', function () { go(i + 1); });
+    nav.appendChild(b);
+  });
+  function go(n) {
+    cur = Math.max(1, Math.min(LAST, n));
+    steps.forEach(function (s, i) { s.hidden = (i + 1) !== cur; });
+    $$('.chip', nav).forEach(function (c, i) {
+      if (i + 1 === cur) c.setAttribute('aria-current', 'step'); else c.removeAttribute('aria-current');
+    });
+    $('#where').textContent = cur === LAST ? 'Resultados' : 'Paso ' + cur + ' de ' + (LAST - 1) + ' · ' + steps[cur - 1].dataset.title;
+    $('#next').disabled = cur === LAST;
+    $('#next').textContent = cur === LAST - 1 ? 'Ver resultados' : 'Siguiente';
+    if (cur === LAST) renderResults();
+    try { window.scrollTo(0, 0); } catch (e) {}
+  }
+  $('#next').addEventListener('click', function () { go(cur + 1); });
+
+  function refreshDone(step) {
+    var items = $$('.ex[data-has], .choice', step);
+    var all = items.length > 0 && items.every(function (x) { return x.dataset.done === '1'; });
+    $$('.chip', nav)[steps.indexOf(step)].classList.toggle('done', all);
+  }
+
+  /* ---------- calificar: un solo intento ---------- */
+  function setMsg(box, text, cls) {
+    var m = $('.msg', box); m.textContent = text; m.className = 'msg ' + (cls || '');
+  }
+  function grade(ex, vals) {
+    var inputs = $$('input[data-a]', ex), ok = 0;
+    inputs.forEach(function (i, k) {
+      var v = vals[k] === undefined ? '' : vals[k];
+      i.value = v;
+      var good = Math.abs(num(v) - Number(i.dataset.a)) < 1e-9;
+      i.classList.add(good ? 'ok' : 'bad');
+      i.disabled = true;
+      if (good) ok++;
+      else {
+        var s = document.createElement('span'); s.className = 'fix'; s.textContent = 'Era ' + f(i.dataset.a);
+        i.insertAdjacentElement('afterend', s);
+      }
+    });
+    var tot = inputs.length;
+    ex.dataset.done = '1'; ex.dataset.earned = ok;
+    $$('[data-act]', ex).forEach(function (b) { b.disabled = true; });
+    setMsg(ex, ok === tot ? 'Todo correcto: ' + ok + ' de ' + tot + '.' : 'Obtuviste ' + ok + ' de ' + tot + '. Junto a cada error está la respuesta correcta. Ya no se puede cambiar.', ok === tot ? 'ok' : 'bad');
+    var hint = $('[data-hint-text]', ex); if (hint) hint.hidden = ok === tot;
+    refreshDone(ex.closest('.step'));
+  }
+  function check(ex) {
+    if (ex.dataset.done === '1') return;
+    var inputs = $$('input[data-a]', ex);
+    var blank = inputs.filter(function (i) { return i.value.trim() === ''; }).length;
+    if (blank && ex.dataset.warned !== '1') {
+      ex.dataset.warned = '1';
+      setMsg(ex, (blank === 1 ? 'Te falta 1 casilla por llenar.' : 'Te faltan ' + blank + ' casillas por llenar.') + ' Si envías ahora cuentan como error. Toca otra vez para enviar.', 'bad');
+      return;
+    }
+    var vals = inputs.map(function (i) { return i.value; });
+    grade(ex, vals);
+    S.ans[ex.dataset.qid] = { v: vals }; save();
+  }
+  function gradeChoice(box, idx) {
+    var opts = $$('.opt', box), chosen = opts[idx];
+    if (!chosen) return;
+    var good = chosen.dataset.ok === '1';
+    opts.forEach(function (o) { o.disabled = true; });
+    chosen.classList.add(good ? 'ok' : 'bad');
+    if (!good) opts.forEach(function (o) { if (o.dataset.ok === '1') o.classList.add('key'); });
+    box.dataset.done = '1'; box.dataset.earned = good ? 1 : 0;
+    setMsg(box, (good ? 'Correcto. ' : 'No era esa. La correcta quedó marcada. ') + box.dataset.why, good ? 'ok' : 'bad');
+    refreshDone(box.closest('.step'));
+  }
+  function pick(btn) {
+    var box = btn.closest('.choice');
+    if (box.dataset.done === '1') return;
+    var idx = $$('.opt', box).indexOf(btn);
+    gradeChoice(box, idx);
+    S.ans[box.dataset.qid] = { i: idx }; save();
+  }
+  document.addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b || b.disabled) return;
+    if (b.dataset.act === 'check') check(b.closest('.ex'));
+    else if (b.classList.contains('opt')) pick(b);
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' && e.target.classList && e.target.classList.contains('cell')) {
+      var ex = e.target.closest('.ex'); if (ex) check(ex);
+    }
+  });
+
+  /* ---------- resultados ---------- */
+  function stats() {
+    var r = { tot: 0, earned: 0, pending: 0, per: {} };
+    qs.forEach(function (q) {
+      var st = q.closest('.step').dataset.step, pts = Number(q.dataset.pts);
+      r.per[st] = r.per[st] || { t: 0, e: 0, p: 0 };
+      r.tot += pts; r.per[st].t += pts;
+      if (q.dataset.done === '1') { var e = Number(q.dataset.earned); r.earned += e; r.per[st].e += e; }
+      else { r.pending++; r.per[st].p++; }
+    });
+    return r;
+  }
+  function remark(pct, pending) {
+    if (pending) return 'Todavía tienes preguntas sin contestar. Cuentan como 0 hasta que las envíes.';
+    if (pct >= 90) return 'Excelente. Ya dominas la receta del simplex.';
+    if (pct >= 70) return 'Muy bien. Repasa los pasos donde fallaste y quedas listo.';
+    if (pct >= 50) return 'Vas en camino. Vuelve a leer los pasos marcados en rojo.';
+    return 'Conviene repasar la clase otra vez, con calma y paso por paso.';
+  }
+  function summaryText(s) {
+    var pct = s.tot ? s.earned / s.tot * 100 : 0, lines = [];
+    lines.push('Simplex ejercicio 2. Resultado');
+    lines.push('Alumno: ' + S.name);
+    lines.push('Fecha: ' + new Date().toLocaleString('es-MX'));
+    lines.push('Puntaje: ' + s.earned + ' de ' + s.tot + ' (' + (pct / 10).toFixed(1) + ' de 10)');
+    for (var k = 1; k < LAST; k++) {
+      var p = s.per[k]; if (!p) continue;
+      lines.push('Paso ' + k + ' (' + steps[k - 1].dataset.title + '): ' + p.e + ' de ' + p.t + (p.p ? ' · sin contestar: ' + p.p : ''));
+    }
+    return lines.join('\n');
+  }
+  function renderResults() {
+    var s = stats(), pct = s.tot ? s.earned / s.tot * 100 : 0;
+    $('#rname').textContent = S.name ? S.name : 'Tu puntaje';
+    var h = '<p class="small">' + new Date().toLocaleString('es-MX') + '</p>';
+    h += '<div class="score"><span class="big">' + s.earned + ' / ' + s.tot + '</span><span class="grade">' + (pct / 10).toFixed(1) + ' de 10</span></div>';
+    h += '<div class="meter" role="img" aria-label="' + Math.round(pct) + ' por ciento de aciertos"><i style="width:' + pct.toFixed(1) + '%"></i></div>';
+    h += '<p><b>' + remark(pct, s.pending) + '</b></p>';
+    h += '<div class="scroll"><table class="res"><thead><tr><th>Paso</th><th class="n">Puntos</th><th>Estado</th></tr></thead><tbody>';
+    for (var k = 1; k < LAST; k++) {
+      var p = s.per[k]; if (!p) continue;
+      var st = p.p ? '<span class="over">Sin contestar: ' + p.p + '</span>' : (p.e === p.t ? '<span class="good">Todo bien</span>' : '<span class="over">Repasar</span>');
+      h += '<tr><td>' + k + '. ' + steps[k - 1].dataset.title + '</td><td class="n">' + p.e + ' / ' + p.t + '</td><td class="st">' + st + '</td></tr>';
+    }
+    h += '</tbody></table></div>';
+    h += '<div class="actions"><button type="button" class="btn" id="copyBtn">Copiar resumen</button></div>';
+    h += '<p class="msg" id="copyMsg" role="status"></p>';
+    h += '<textarea id="copybox" class="copybox" readonly hidden aria-label="Resumen para copiar"></textarea>';
+    h += '<p class="small">Tu puntaje no se guarda: si cierras o recargas la página se pierde. Antes de salir, copia el resumen o toma una captura de esta pantalla.</p>';
+    $('#resbox').innerHTML = h;
+    $('#copyBtn').addEventListener('click', function () {
+      var t = summaryText(stats());
+      var fallback = function () {
+        var box = $('#copybox'); box.value = t; box.hidden = false; box.focus(); box.select();
+        $('#copyMsg').textContent = 'Selecciona el texto y cópialo.'; $('#copyMsg').className = 'msg';
+      };
+      try {
+        navigator.clipboard.writeText(t).then(function () {
+          $('#copyMsg').textContent = 'Resumen copiado.'; $('#copyMsg').className = 'msg ok';
+        }, fallback);
+      } catch (e) { fallback(); }
+    });
+  }
+
+  /* ---------- pantalla de nombre ---------- */
+  function enter() {
+    $('#gate').hidden = true;
+    $('#who').textContent = S.name;
+  }
+  $('#gform').addEventListener('submit', function (e) {
+    e.preventDefault();
+    var v = $('#nameIn').value.replace(/\s+/g, ' ').trim();
+    if (v.length < 3) { $('#gerr').textContent = 'Escribe tu nombre completo (mínimo 3 letras).'; return; }
+    S = { name: v, ans: {} }; save(); enter(); go(1);
+  });
+
+  /* ---------- gráfica y juego del paso 8 ---------- */
+  var X0 = 46, Y0 = 330, W = 456, H = 312, XM = 600, YM = 450;
+  var sx = function (v) { return X0 + v / XM * W; }, sy = function (v) { return Y0 - v / YM * H; };
+  var svg = '', v;
+  for (v = 0; v <= XM; v += 100) {
+    svg += '<line class="gr" x1="' + sx(v) + '" y1="' + Y0 + '" x2="' + sx(v) + '" y2="' + (Y0 - H) + '"/>';
+    svg += '<text class="tk" x="' + sx(v) + '" y="' + (Y0 + 18) + '" text-anchor="middle">' + v + '</text>';
+  }
+  for (v = 0; v <= YM; v += 50) {
+    svg += '<line class="gr" x1="' + X0 + '" y1="' + sy(v) + '" x2="' + (X0 + W) + '" y2="' + sy(v) + '"/>';
+    if (v % 100 === 0) svg += '<text class="tk" x="' + (X0 - 8) + '" y="' + (sy(v) + 4) + '" text-anchor="end">' + v + '</text>';
+  }
+  svg += '<polygon class="zone" points="' + sx(0) + ',' + sy(0) + ' ' + sx(400) + ',' + sy(0) + ' ' + sx(150) + ',' + sy(250) + ' ' + sx(0) + ',' + sy(300) + '"/>';
+  var L = [['l1', 400, 0, 0, 400], ['l2', 500, 0, 275, 450], ['l3', 600, 100, 0, 300]];
+  L.forEach(function (l) { svg += '<line class="ln ' + l[0] + '" x1="' + sx(l[1]) + '" y1="' + sy(l[2]) + '" x2="' + sx(l[3]) + '" y2="' + sy(l[4]) + '"/>'; });
+  svg += '<line class="ax" x1="' + X0 + '" y1="' + Y0 + '" x2="' + (X0 + W) + '" y2="' + Y0 + '"/><line class="ax" x1="' + X0 + '" y1="' + Y0 + '" x2="' + X0 + '" y2="' + (Y0 - H) + '"/>';
+  svg += '<text class="tk" x="' + (X0 + W) + '" y="' + (Y0 + 34) + '" text-anchor="end">X1</text><text class="tk" x="' + (X0 + 8) + '" y="' + (Y0 - H + 8) + '">X2</text>';
+  svg += '<text class="vz" x="' + sx(400) + '" y="' + (sy(0) - 12) + '" text-anchor="middle">Z=2400</text>';
+  svg += '<text class="vz" x="' + (sx(0) + 12) + '" y="' + (sy(300) - 6) + '">Z=1200</text>';
+  svg += '<text class="vz" x="' + (sx(150) + 10) + '" y="' + (sy(250) - 6) + '">Z=1900</text>';
+  svg += '<circle id="pt" class="pt ok" r="8" cx="' + sx(200) + '" cy="' + sy(100) + '"/>';
+  $('#plot').innerHTML = svg;
+
+  var CONS = [[1, 1, 400, 'X1 + X2'], [2, 1, 1000, '2X1 + X2'], [1, 3, 900, 'X1 + 3X2']];
+  var best = null, s1 = $('#x1'), s2 = $('#x2');
+  function play() {
+    var a = Number(s1.value), b = Number(s2.value), feas = true, h = '';
+    $('#x1v').textContent = a; $('#x2v').textContent = b;
+    CONS.forEach(function (c) {
+      var lhs = c[0] * a + c[1] * b, ok = lhs <= c[2];
+      if (!ok) feas = false;
+      h += '<li><span>' + c[3] + ' = ' + lhs + ' ≤ ' + c[2] + '</span>' +
+        (ok ? '<span class="good">sobran ' + (c[2] - lhs) + '</span>' : '<span class="over">se pasa por ' + (lhs - c[2]) + '</span>') + '</li>';
+    });
+    $('#cons').innerHTML = h;
+    var z = 6 * a + 4 * b;
+    $('#zval').textContent = 'Z = ' + z;
+    var pt = $('#pt'); pt.setAttribute('cx', sx(a)); pt.setAttribute('cy', sy(b)); pt.setAttribute('class', 'pt ' + (feas ? 'ok' : 'bad'));
+    if (feas && (best === null || z > best)) best = z;
+    $('#zbest').textContent = best === null ? 'Tu mejor Z válido: ninguna todavía' : 'Tu mejor Z válido: ' + best;
+    var m = $('#pmsg');
+    if (!feas) { m.textContent = 'Este punto se sale de la zona: algún límite se pasa.'; m.className = 'msg bad'; }
+    else if (z >= 2400) { m.textContent = 'Igualaste al simplex. Nadie puede pasar de 2400 sin salirse de la zona.'; m.className = 'msg ok'; }
+    else { m.textContent = 'Punto válido. Todavía se puede ganar más.'; m.className = 'msg ok'; }
+  }
+  s1.addEventListener('input', play); s2.addEventListener('input', play);
+  $('#setopt').addEventListener('click', function () { s1.value = 400; s2.value = 0; play(); });
+  play();
+
+  /* ---------- arranque: restaurar y mostrar pantalla de nombre ---------- */
+  load();
+  qs.forEach(function (q) {
+    var a = S.ans[q.dataset.qid]; if (!a) return;
+    if (q.classList.contains('choice')) { if (typeof a.i === 'number') gradeChoice(q, a.i); }
+    else if (a.v && a.v.length) grade(q, a.v);
+  });
+  go(1);
+  if (S.name) enter();
+  else { $('#gate').hidden = false; setTimeout(function () { try { $('#nameIn').focus(); } catch (e) {} }, 0); }
+})();
+</script>
+
+</body></html>
